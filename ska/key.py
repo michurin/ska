@@ -24,10 +24,18 @@
 # authors and should not be interpreted as representing official policies, either expressed
 # or implied, of Alexey V Michurin.
 
-from md5 import new as md5_new
 from random import randrange
+try:
+    from hashlib import md5 as md5_new
+except ImportError:
+    # for Python < 2.5
+    from md5 import new as md5_new
 
 __all__ = 'gen_salt', 'passphrase_to_salted_key_and_iv'
+
+__doc__ = '''Tools related to key derivation service
+
+See RFC2898 PKCS #5: Password-Based Cryptography Specification Version 2.0'''
 
 md5 = lambda x: md5_new(x).digest()
 
@@ -42,3 +50,9 @@ def passphrase_to_salted_key_and_iv(passphrase, salt='', klen=16, ivlen=8):
         d = md5(d + passphrase + salt)
         dk += d
     return (dk[:klen], dk[klen:dklen])
+
+if __name__ == '__main__':
+    from testutil import ok, qrepr
+    a = '\x09\x8f\x6b\xcd\x46\x21\xd3\x73\xca\xde\x4e\x83\x26\x27\xb4\xf6'
+    b = md5('test')
+    print qrepr(b), ok(a == b)

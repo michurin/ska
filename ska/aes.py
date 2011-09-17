@@ -24,7 +24,22 @@
 # authors and should not be interpreted as representing official policies, either expressed
 # or implied, of Alexey V Michurin.
 
-__all__ = 'encrypt', 'decrypt', 'aes'
+
+__all__ = 'aes'
+
+__doc__ = '''AES (Advanced Encryption Standard) implementation
+
+Block size: 128 bits
+Key size: 128, 192, 256 bits
+
+Example:
+from ska.aes import aes
+cipher = aes('keykeykeykeykeykeykeykey') # 192 bits
+e = cipher.enc('testtesttesttest') # 128 bits
+d = cipher.dec(e)
+print repr(d)
+'''
+
 
 KLEN_OPTIONS = {
     16: 10,

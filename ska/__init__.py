@@ -24,4 +24,24 @@
 # authors and should not be interpreted as representing official policies, either expressed
 # or implied, of Alexey V Michurin.
 
-__version__ = '1.0pre2'
+__version__ = '1.0pre3'
+
+__doc__ = '''SKA -- Symmetric-key algorithms
+
+Version: ''' + __version__ + '''
+Project homepage: http://code.google.com/p/ska/
+Author: Alexey V Michurin <a.michurin@gmail.com>
+
+It is a pure Python implementation of number of tools
+to encrypt and decrypt data using symmetric-key algorithms.
+
+SKA provides three layers of abstraction.
+
+Highest one is a OpenSSL-compat layer. See ska.openssl.
+
+Medium layer provides convenience shortcuts. See ska.shortcuts.
+
+Undermost layer gives you access to all parts of
+encryption/decryption operations separately. See source code
+of ska.shortcuts for more details.
+'''

@@ -24,6 +24,7 @@
 # authors and should not be interpreted as representing official policies, either expressed
 # or implied, of Alexey V Michurin.
 
+
 from key import gen_salt
 from shortcuts import \
     enc_bf_ecb, dec_bf_ecb, \
@@ -41,82 +42,101 @@ __all__ = ('openssl_enc_bf_ecb', 'openssl_dec_bf_ecb',
            'openssl_enc_aes_192_cbc', 'openssl_dec_aes_192_cbc',
            'openssl_enc_aes_256_cbc', 'openssl_dec_aes_256_cbc')
 
+__doc__ = '''OpenSSL-compat leyer
 
-def __enc_header(salted, salt):
+Note: this module provides only operation supported by openssl(1).
+I.e. PCBC and various length keys for Blowfish are not provided
+by this module.
+
+All functions arguments and names are similar to command line
+options of openssl(1).
+
+For example
+openssl_enc_aes_128_cbc('passphrase', 'text', True)
+is the same as
+echo -n 'text' | openssl enc -aes-128-cbc -salt -pass pass:passphrase
+and
+openssl_dec_bf_cbc('passphrase', open('encrypted', 'r').read())
+is the same as
+cat encrypted | openssl dec -bf-cbc -pass pass:passphrase
+'''
+
+
+def enc_header(salted, salt):
     if salted:
         if salt is None:
             salt = gen_salt(8)
         return 'Salted__' + salt, salt
     return '', ''
 
-def __dec_header(cipher):
+def dec_header(cipher):
     if cipher[:8] == 'Salted__':
         return cipher[8:16], cipher[16:]
     return '', cipher
 
 
 def openssl_enc_bf_ecb(passphrase, text, salted=True, salt=None):
-    header, salt = __enc_header(salted, salt)
+    header, salt = enc_header(salted, salt)
     return header + enc_bf_ecb(text, salt, passphrase, 16)
 
 def openssl_dec_bf_ecb(passphrase, cipher):
-    salt, c = __dec_header(cipher)
+    salt, c = dec_header(cipher)
     return dec_bf_ecb(c, salt, passphrase, 16)
 
 def openssl_enc_bf_cbc(passphrase, text, salted=True, salt=None):
-    header, salt = __enc_header(salted, salt)
+    header, salt = enc_header(salted, salt)
     return header + enc_bf_cbc(text, salt, passphrase, 16)
 
 def openssl_dec_bf_cbc(passphrase, cipher):
-    salt, c = __dec_header(cipher)
+    salt, c = dec_header(cipher)
     return dec_bf_cbc(c, salt, passphrase, 16)
 
 def openssl_enc_aes_128_ecb(passphrase, text, salted=True, salt=None):
-    header, salt = __enc_header(salted, salt)
+    header, salt = enc_header(salted, salt)
     return header + enc_aes_ecb(text, salt, passphrase, 16)
 
 def openssl_dec_aes_128_ecb(passphrase, cipher):
-    salt, c = __dec_header(cipher)
+    salt, c = dec_header(cipher)
     return dec_aes_ecb(c, salt, passphrase, 16)
 
 def openssl_enc_aes_192_ecb(passphrase, text, salted=True, salt=None):
-    header, salt = __enc_header(salted, salt)
+    header, salt = enc_header(salted, salt)
     return header + enc_aes_ecb(text, salt, passphrase, 24)
 
 def openssl_dec_aes_192_ecb(passphrase, cipher):
-    salt, c = __dec_header(cipher)
+    salt, c = dec_header(cipher)
     return dec_aes_ecb(c, salt, passphrase, 24)
 
 def openssl_enc_aes_256_ecb(passphrase, text, salted=True, salt=None):
-    header, salt = __enc_header(salted, salt)
+    header, salt = enc_header(salted, salt)
     return header + enc_aes_ecb(text, salt, passphrase, 32)
 
 def openssl_dec_aes_256_ecb(passphrase, cipher):
-    salt, c = __dec_header(cipher)
+    salt, c = dec_header(cipher)
     return dec_aes_ecb(c, salt, passphrase, 32)
 
 def openssl_enc_aes_128_cbc(passphrase, text, salted=True, salt=None):
-    header, salt = __enc_header(salted, salt)
+    header, salt = enc_header(salted, salt)
     return header + enc_aes_cbc(text, salt, passphrase, 16)
 
 def openssl_dec_aes_128_cbc(passphrase, cipher):
-    salt, c = __dec_header(cipher)
+    salt, c = dec_header(cipher)
     return dec_aes_cbc(c, salt, passphrase, 16)
 
 def openssl_enc_aes_192_cbc(passphrase, text, salted=True, salt=None):
-    header, salt = __enc_header(salted, salt)
+    header, salt = enc_header(salted, salt)
     return header + enc_aes_cbc(text, salt, passphrase, 24)
 
 def openssl_dec_aes_192_cbc(passphrase, cipher):
-    salt, c = __dec_header(cipher)
+    salt, c = dec_header(cipher)
     return dec_aes_cbc(c, salt, passphrase, 24)
 
 def openssl_enc_aes_256_cbc(passphrase, text, salted=True, salt=None):
-    header, salt = __enc_header(salted, salt)
+    header, salt = enc_header(salted, salt)
     return header + enc_aes_cbc(text, salt, passphrase, 32)
 
 def openssl_dec_aes_256_cbc(passphrase, cipher):
-    salt, c = __dec_header(cipher)
+    salt, c = dec_header(cipher)
     return dec_aes_cbc(c, salt, passphrase, 32)
 
 
@@ -125,22 +145,22 @@ if __name__ == '__main__':
     text = 'Red leather, Yellow leather.'
     passphrase = 'Aluminum, linoleum.'
     for rem, enc_op, dec_op, salted, ref_cipher in (
-('openssl -bf-ecb -salt', openssl_enc_bf_ecb, openssl_dec_bf_ecb, True, 'Salted__\x5DbEzK\xE2\x60\x96E\x25\xBC\x5B\x28\xC9\xCCY\xF7\xCF\xDAE\x0F\xCF\xBA\xBD\xF2\xD2\x91\xB3\x5E\xBA\x2F\x1C\xC9\x2F\xE2e\xF6\x8C\xFB\xD8'),
-('openssl -bf-ecb -nosalt', openssl_enc_bf_ecb, openssl_dec_bf_ecb, False, '\x06Z\x98oaQ\x3C\x86\xD0\x96\x23v\x8D\xEF\xE1\xDB\x0A\x14\x08\x80\x09\x3F\xE0\xF8\xAA\x17\xDB\x2B\x90\xE3Y\x5D'),
-('openssl -bf-cbc -salt', openssl_enc_bf_cbc, openssl_dec_bf_cbc, True, 'Salted__\xEE\x88\xE9\x01\x05Z\x0E\xA9\xB0\xC7\xB3\x24\x2DM\x92t0\x8D2\x2D\x2Ft\x7Fh\x14\xB0\x02\xB5\x97\x86\xDA\xC5O\x5C1A\xE6\xEF\xF6\x18'),
-('openssl -bf-cbc -nosalt', openssl_enc_bf_cbc, openssl_dec_bf_cbc, False, 'g\xEC\x11\xC2\x28\xD4\xB5W\xD6\x14W\xC1\x0BT\x20TP\xCAa\xB0\x96D\x05\xD2\xE5\xBE\xE6i\xB4\x06\xF6\xA1'),
-('openssl -aes-128-ecb -salt', openssl_enc_aes_128_ecb, openssl_dec_aes_128_ecb, True, 'Salted__\x28\xA1\x2E\x80\xA3\x84\xD3\x1F_\xDF7\x97\xBC4\x60P\x03\xB3l\x13\x9F\x25A\xBD\xA2C\x23M\x24S\xAC\x2C\x25k\xC7c\xFD\xDAoD'),
-('openssl -aes-128-ecb -nosalt', openssl_enc_aes_128_ecb, openssl_dec_aes_128_ecb, False, '\xB2\x5E\x0FO\xC4\xFD\xAE\x8F\x99\xA8\x18\x93\x83\xD2\x3A\x9B\x9A3\x98\xCBk\xDC\x195\xC85\x2D\xAB\xB6U\x9F\xD5'),
-('openssl -aes-192-ecb -salt', openssl_enc_aes_192_ecb, openssl_dec_aes_192_ecb, True, 'Salted__\xBA\x0A\xAD\x0F\xB1\xAC\x9ET\xA3\xE8\x19\xC7P\xFDaY\x3B\xD9\x95\xB0I\x2EZ8\x40y\xA3\x0B\x3E\x0Dn\xF6\xA9Y6J\xAC\x5D\x9E\x17'),
-('openssl -aes-192-ecb -nosalt', openssl_enc_aes_192_ecb, openssl_dec_aes_192_ecb, False, '\xD7\xAC\x2A\x21\x84\x94O\xA3\xB7\x90\xCBj\xFB\xA8\xA0\x3D\x11\xB1\x10\x23\xD4\x2C\xEBu4\x3E\xE4\xDDO\x12b\x27'),
-('openssl -aes-256-ecb -salt', openssl_enc_aes_256_ecb, openssl_dec_aes_256_ecb, True, 'Salted__\x27_\xF1\xDF\xD3\x3D5\xE3M6\x1E\x92c\xF9\x98Z4\xD30\xCA\xA5q\x15\xB4\xB5\xD27\xEF\xD0\x2A\xF7\x3F\xB0\xD2\xD4\x9FW\xEA\x3E\x0E'),
-('openssl -aes-256-ecb -nosalt', openssl_enc_aes_256_ecb, openssl_dec_aes_256_ecb, False, '\xCE\xAC6\xC4\xED\xCF\x98\xFA\x91o\x8B\x20\xD0e\xD4x\x8Ek5\xC3\xE7\x16\x5C\xA2\xB5Y\xC7\x89\x0F_\x07\xFF'),
-('openssl -aes-128-cbc -salt', openssl_enc_aes_128_cbc, openssl_dec_aes_128_cbc, True, 'Salted__\x2Dd\x22\xDD\x7D\x93\xDC\xA6\xCBj\x9Cu\x2D\xA0\xB2\x26\x5D\xF9\x3B\x8D\xB4s7\x92a\xD1\x98\x9E\x04Pmo\x16\x0A\xD2\x14\x92\xB0l\x2E'),
-('openssl -aes-128-cbc -nosalt', openssl_enc_aes_128_cbc, openssl_dec_aes_128_cbc, False, '\x04Us\x99\xBC\x0F\xAF\xDB\xEB\xD9\x91\xF1\x3C\x0Dr3\xF9\xA8\xE7i\x3FF\xF7M\x236\xA6\xC3XJ\x87\xDA'),
-('openssl -aes-192-cbc -salt', openssl_enc_aes_192_cbc, openssl_dec_aes_192_cbc, True, 'Salted__\xB0t\x95\xC1\x8E\xE8\xCDr\x03\x1E\x9D\x1AfJx\xA0\xDCU\x0Ap\xF0\xD0\xE96\x8AoJ\x17\xE5\x8A\x81\xC7\x5E\xB3\xCD\xD8\xE0\xFE\x90S'),
-('openssl -aes-192-cbc -nosalt', openssl_enc_aes_192_cbc, openssl_dec_aes_192_cbc, False, '\xC5\xBAF\xECm\xEA\x00\xC4\x1Bv\x01\xEC\x99\x9C\x81\xE2\xD7\x1D\xE8\x3E\x17\xF3\x89\x90\xBF\x5B\x0B\x98Q\x00\x40G'),
-('openssl -aes-256-cbc -salt', openssl_enc_aes_256_cbc, openssl_dec_aes_256_cbc, True, 'Salted__5\x5B\x0A\xE8M\xC9\xF8\xC7K\xBE\xFE\x84\x9CK\xC2\x08\xDD\x2C\x9E\xFE\xB5\xCD\x1B\x11\x201\xB95C\x0A\xAA\xD9N\x0B\x01n\xB2\xA5\x18W'),
-('openssl -aes-256-cbc -nosalt', openssl_enc_aes_256_cbc, openssl_dec_aes_256_cbc, False, '\xE1\xD7cS\xE5\x60\x1A\x27\xB8\xBCe\x2F\xFA\x06\xDC\x17\xEF\x26\x91\x83\x3AfG\x87\xB4\x9D\x0B5\xF7s\x9C\x02'),
+('openssl -bf-ecb -salt', openssl_enc_bf_ecb, openssl_dec_bf_ecb, True, 'Salted__\x5dbEzK\xe2\x60\x96E\x25\xbc\x5b\x28\xc9\xccY\xf7\xcf\xdaE\x0f\xcf\xba\xbd\xf2\xd2\x91\xb3\x5e\xba\x2f\x1c\xc9\x2f\xe2e\xf6\x8c\xfb\xd8'),
+('openssl -bf-ecb -nosalt', openssl_enc_bf_ecb, openssl_dec_bf_ecb, False, '\x06Z\x98oaQ\x3c\x86\xd0\x96\x23v\x8d\xef\xe1\xdb\x0a\x14\x08\x80\x09\x3f\xe0\xf8\xaa\x17\xdb\x2b\x90\xe3Y\x5d'),
+('openssl -bf-cbc -salt', openssl_enc_bf_cbc, openssl_dec_bf_cbc, True, 'Salted__\xee\x88\xe9\x01\x05Z\x0e\xa9\xb0\xc7\xb3\x24\x2dM\x92t0\x8d2\x2d\x2ft\x7fh\x14\xb0\x02\xb5\x97\x86\xda\xc5O\x5c1A\xe6\xef\xf6\x18'),
+('openssl -bf-cbc -nosalt', openssl_enc_bf_cbc, openssl_dec_bf_cbc, False, 'g\xec\x11\xc2\x28\xd4\xb5W\xd6\x14W\xc1\x0bT\x20TP\xcaa\xb0\x96D\x05\xd2\xe5\xbe\xe6i\xb4\x06\xf6\xa1'),
+('openssl -aes-128-ecb -salt', openssl_enc_aes_128_ecb, openssl_dec_aes_128_ecb, True, 'Salted__\x28\xa1\x2e\x80\xa3\x84\xd3\x1f_\xdf7\x97\xbc4\x60P\x03\xb3l\x13\x9f\x25A\xbd\xa2C\x23M\x24S\xac\x2c\x25k\xc7c\xfd\xdaoD'),
+('openssl -aes-128-ecb -nosalt', openssl_enc_aes_128_ecb, openssl_dec_aes_128_ecb, False, '\xb2\x5e\x0fO\xc4\xfd\xae\x8f\x99\xa8\x18\x93\x83\xd2\x3a\x9b\x9a3\x98\xcbk\xdc\x195\xc85\x2d\xab\xb6U\x9f\xd5'),
+('openssl -aes-192-ecb -salt', openssl_enc_aes_192_ecb, openssl_dec_aes_192_ecb, True, 'Salted__\xba\x0a\xad\x0f\xb1\xac\x9eT\xa3\xe8\x19\xc7P\xfdaY\x3b\xd9\x95\xb0I\x2eZ8\x40y\xa3\x0b\x3e\x0dn\xf6\xa9Y6J\xac\x5d\x9e\x17'),
+('openssl -aes-192-ecb -nosalt', openssl_enc_aes_192_ecb, openssl_dec_aes_192_ecb, False, '\xd7\xac\x2a\x21\x84\x94O\xa3\xb7\x90\xcbj\xfb\xa8\xa0\x3d\x11\xb1\x10\x23\xd4\x2c\xebu4\x3e\xe4\xddO\x12b\x27'),
+('openssl -aes-256-ecb -salt', openssl_enc_aes_256_ecb, openssl_dec_aes_256_ecb, True, 'Salted__\x27_\xf1\xdf\xd3\x3d5\xe3M6\x1e\x92c\xf9\x98Z4\xd30\xca\xa5q\x15\xb4\xb5\xd27\xef\xd0\x2a\xf7\x3f\xb0\xd2\xd4\x9fW\xea\x3e\x0e'),
+('openssl -aes-256-ecb -nosalt', openssl_enc_aes_256_ecb, openssl_dec_aes_256_ecb, False, '\xce\xac6\xc4\xed\xcf\x98\xfa\x91o\x8b\x20\xd0e\xd4x\x8ek5\xc3\xe7\x16\x5c\xa2\xb5Y\xc7\x89\x0f_\x07\xff'),
+('openssl -aes-128-cbc -salt', openssl_enc_aes_128_cbc, openssl_dec_aes_128_cbc, True, 'Salted__\x2dd\x22\xdd\x7d\x93\xdc\xa6\xcbj\x9cu\x2d\xa0\xb2\x26\x5d\xf9\x3b\x8d\xb4s7\x92a\xd1\x98\x9e\x04Pmo\x16\x0a\xd2\x14\x92\xb0l\x2e'),
+('openssl -aes-128-cbc -nosalt', openssl_enc_aes_128_cbc, openssl_dec_aes_128_cbc, False, '\x04Us\x99\xbc\x0f\xaf\xdb\xeb\xd9\x91\xf1\x3c\x0dr3\xf9\xa8\xe7i\x3fF\xf7M\x236\xa6\xc3XJ\x87\xda'),
+('openssl -aes-192-cbc -salt', openssl_enc_aes_192_cbc, openssl_dec_aes_192_cbc, True, 'Salted__\xb0t\x95\xc1\x8e\xe8\xcdr\x03\x1e\x9d\x1afJx\xa0\xdcU\x0ap\xf0\xd0\xe96\x8aoJ\x17\xe5\x8a\x81\xc7\x5e\xb3\xcd\xd8\xe0\xfe\x90S'),
+('openssl -aes-192-cbc -nosalt', openssl_enc_aes_192_cbc, openssl_dec_aes_192_cbc, False, '\xc5\xbaF\xecm\xea\x00\xc4\x1bv\x01\xec\x99\x9c\x81\xe2\xd7\x1d\xe8\x3e\x17\xf3\x89\x90\xbf\x5b\x0b\x98Q\x00\x40G'),
+('openssl -aes-256-cbc -salt', openssl_enc_aes_256_cbc, openssl_dec_aes_256_cbc, True, 'Salted__5\x5b\x0a\xe8M\xc9\xf8\xc7K\xbe\xfe\x84\x9cK\xc2\x08\xdd\x2c\x9e\xfe\xb5\xcd\x1b\x11\x201\xb95C\x0a\xaa\xd9N\x0b\x01n\xb2\xa5\x18W'),
+('openssl -aes-256-cbc -nosalt', openssl_enc_aes_256_cbc, openssl_dec_aes_256_cbc, False, '\xe1\xd7cS\xe5\x60\x1a\x27\xb8\xbce\x2f\xfa\x06\xdc\x17\xef\x26\x91\x83\x3afG\x87\xb4\x9d\x0b5\xf7s\x9c\x02'),
     ):
         if salted:
             salt = ref_cipher[8:16]

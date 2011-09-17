@@ -28,7 +28,9 @@ import sys
 
 __all__ = 'qrepr', 'ok', 'pad'
 
-qrepr = lambda x: ''.join(map(lambda x: '\\x%02X' % ord(x), x))
+__doc__ = '''Testing'''
+
+qrepr = lambda x: ''.join(map(lambda x: '\\x%02x' % ord(x), x))
 
 if sys.stdout.isatty():
     ok = lambda x: x and '\x1b[32mOK\x1b[0m' or '\x1b[31;1mFAIL\x1b[0m'
@@ -36,7 +38,7 @@ else:
     ok = lambda x: x and 'OK' or 'FAIL'
 
 padline = ' .' * 80
-def pad(l, p, ):
+def pad(l, p):
     global padline
     padline = padline[1:] + padline[:1]
     return l + ' ' + padline[len(l)+1:p]

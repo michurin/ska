@@ -24,9 +24,11 @@
 # authors and should not be interpreted as representing official policies, either expressed
 # or implied, of Alexey V Michurin.
 
-# RFC3369/PKCS#5/standard block padding
 
 __all__ = 'pkcs5_pad', 'pkcs5_unpad', 'pkcs7_pad', 'pkcs7_unpad'
+
+__doc__ = 'RFC3369 standard block padding'
+
 
 def pkcs5_pad(buffer):
     padding = 8 - len(buffer) % 8

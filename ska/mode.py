@@ -27,6 +27,11 @@
 
 __all__ = 'enc_ecb', 'dec_ecb', 'enc_cbc', 'dec_cbc', 'enc_pcbc', 'dec_pcbc'
 
+__doc__ = '''Block cipher modes of operation
+
+Supported modes: ECB, CBC, PCBC
+Supported block size: 64, 128 bits
+'''
 
 def xor_text(a, b):
     return ''.join(map(lambda x: chr(ord(x[0])^ord(x[1])), zip(a, b)))
@@ -91,36 +96,34 @@ class dec_pcbc(enc_cbc):
 
 
 if __name__ == '__main__':
-    from testutil import ok
+    from testutil import ok, pad
     class fake_chifer:
         def enc(self, text):
             return xor_text(text, 'A'*len(text))
         dec = enc
-    def test(mode_name, enc_mode, dec_mode):
-        print 'Test mode ' + mode_name
+    def test(mode_name, enc_mode, dec_mode, block_size):
+        print 'Test mode %s block size %d' % (mode_name, block_size)
         print '     one chank coding'
-        iv = '87654321'
+        iv = ''.join(map(chr, range(48 + block_size, 48, -1)))
         c = fake_chifer()
         text = 'ABCDEFGHabcdefgh'
         e = enc_mode(c, iv)
         cryp = e(text)
         d = dec_mode(c, iv)
         textb = d(cryp)
-        print text, textb, ok(text == textb)
+        print pad('%s %s' % (text, textb), 70), ok(text == textb)
         print '     stream coding'
         text = ''.join(map(lambda x: chr(x), xrange(65, 65+32)))
         e = enc_mode(c, iv)
         cryp = ''
-        cryp += e(text[:8])
-        cryp += e(text[8:16])
+        cryp += e(text[:16])
         cryp += e(text[16:])
         d = dec_mode(c, iv)
         textb = ''
-        textb += d(cryp[:8])
-        textb += d(cryp[8:16])
+        textb += d(cryp[:16])
         textb += d(cryp[16:])
-        print text, textb, ok(text == textb)
-    test('PCBC', enc_pcbc, dec_pcbc)
-    test('CBC', enc_cbc, dec_cbc)
-    test('ECB', lambda c, iv: enc_ecb(c), lambda c, iv: dec_ecb(c))
-    # TODO: test bs=16
+        print pad('%s %s' % (text, textb), 70), ok(text == textb)
+    for bs in 8, 16:
+        test('PCBC', enc_pcbc, dec_pcbc, bs)
+        test('CBC', enc_cbc, dec_cbc, bs)
+        test('ECB', lambda c, iv: enc_ecb(c, len(iv)), lambda c, iv: dec_ecb(c, len(iv)), bs)
